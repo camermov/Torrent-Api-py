@@ -9,9 +9,9 @@ from helper.asyncioPoliciesFix import decorator_asyncio_fix
 from helper.html_scraper import Scraper
 
 
-class TorrentFunk:
+class YourBittorrent:
     def __init__(self):
-        self.BASE_URL = "https://www.torrentfunk.com"
+        self.BASE_URL = "https://yourbittorrent.com"
         self.LIMIT = None
 
     @decorator_asyncio_fix
@@ -21,15 +21,17 @@ class TorrentFunk:
                 html = await res.text(encoding="ISO-8859-1")
                 soup = BeautifulSoup(html, "lxml")
                 try:
-                    obj["torrent"] = soup.select_one(
-                        "#right > main > div.content > table:nth-child(3) > tr > td:nth-child(2) > a"
-                    )["href"]
-                    obj["category"] = soup.select_one(
-                        "#right > main > div.content > table:nth-child(7) > tr> td:nth-child(2) > a"
-                    ).text
-                    obj["hash"] = soup.select_one(
-                        "#right > main > div.content > table:nth-child(7) > tr:nth-child(3) > td:nth-child(2)"
-                    ).text
+                    container = soup.select_one("div.card-body.container")
+                    poster = (
+                        container.find("div")
+                        .find_all("div")[0]
+                        .find("picture")
+                        .find("img")["src"]
+                    )
+                    clearfix = soup.find("div", class_="clearfix")
+                    torrent = clearfix.find("div").find_all("div")[1].find("a")["href"]
+                    obj["torrent"] = torrent
+                    obj["poster"] = poster
                 except:
                     pass
         except:
@@ -54,18 +56,15 @@ class TorrentFunk:
                 list_of_urls = []
                 my_dict = {"data": []}
 
-                for tr in soup.select(".tmain tr")[idx:]:
+                for tr in soup.find_all("tr")[idx:]:
                     td = tr.find_all("td")
-                    if len(td) == 0:
-                        continue
-                    name = td[0].find("a").text
-                    date = td[1].text
-                    size = td[2].text
-                    seeders = td[3].text
-                    leechers = td[4].text
-                    uploader = td[5].text
-                    url = self.BASE_URL + td[0].find("a")["href"]
+                    name = td[1].find("a").get_text(strip=True)
+                    url = self.BASE_URL + td[1].find("a")["href"]
                     list_of_urls.append(url)
+                    size = td[2].text
+                    date = td[3].text
+                    seeders = td[4].text
+                    leechers = td[5].text
                     my_dict["data"].append(
                         {
                             "name": name,
@@ -73,7 +72,6 @@ class TorrentFunk:
                             "date": date,
                             "seeders": seeders,
                             "leechers": leechers,
-                            "uploader": uploader if uploader else None,
                             "url": url,
                         }
                     )
@@ -87,13 +85,13 @@ class TorrentFunk:
         async with aiohttp.ClientSession() as session:
             start_time = time.time()
             self.LIMIT = limit
-            url = self.BASE_URL + "/all/torrents/{}/{}.html".format(query, page)
+            url = self.BASE_URL + "/?v=&c=&q={}".format(query)
             return await self.parser_result(start_time, url, session, idx=6)
 
     async def parser_result(self, start_time, url, session, idx=1):
         htmls = await Scraper().get_all_results(session, url)
         result, urls = self._parser(htmls, idx)
-        if result:
+        if result != None:
             results = await self._get_torrent(result, session, urls)
             results["time"] = time.time() - start_time
             results["total"] = len(results["data"])
@@ -104,21 +102,28 @@ class TorrentFunk:
         async with aiohttp.ClientSession() as session:
             start_time = time.time()
             self.LIMIT = limit
-            url = self.BASE_URL
-            return await self.parser_result(start_time, url, session)
+            idx = None
+            if not category:
+                url = self.BASE_URL + "/top.html"
+                idx = 1
+            else:
+                if category == "books":
+                    category = "ebooks"
+                url = self.BASE_URL + f"/{category}.html"
+                idx = 4
+            return await self.parser_result(start_time, url, session, idx)
 
     async def recent(self, category, page, limit):
         async with aiohttp.ClientSession() as session:
             start_time = time.time()
             self.LIMIT = limit
+            idx = None
             if not category:
-                url = self.BASE_URL + "/movies/recent.html"
+                url = self.BASE_URL + "/new.html"
+                idx = 1
             else:
-                if category == "apps":
-                    category = "software"
-                elif category == "tv":
-                    category = "television"
-                elif category == "books":
+                if category == "books":
                     category = "ebooks"
-                url = self.BASE_URL + "/{}/recent.html".format(category)
-            return await self.parser_result(start_time, url, session)
+                url = self.BASE_URL + f"/{category}/latest.html"
+                idx = 4
+            return await self.parser_result(start_time, url, session, idx)

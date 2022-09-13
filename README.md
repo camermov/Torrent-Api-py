@@ -14,7 +14,7 @@
 
 <p align="center">
 <span style='font-size: 19px'>
-An Unofficial API for <span style='font-weight:600;'>1337x</span>, <span style='font-weight:600;'>Piratebay</span>, <span style='font-weight:bold;'>Nyaasi</span>, <span style='font-weight:bold;'>Torlock</span>, <span style='font-weight:bold;'>Torrent Galaxy</span>, <span style='font-weight:600;'>Zooqle</span>, <span style='font-weight:600;'>Kickass</span>, <span style='font-weight:600;'>Bitsearch</span>, <span style='font-weight:600;'>MagnetDL</span>Libgen, YTS, Limetorrent, TorrentFunk, Glodls and TorrentProject
+An Unofficial API for <span style='font-weight:600;'>1337x</span>, <span style='font-weight:600;'>Piratebay</span>, <span style='font-weight:bold;'>Nyaasi</span>, <span style='font-weight:bold;'>Torlock</span>, <span style='font-weight:bold;'>Torrent Galaxy</span>, <span style='font-weight:600;'>Zooqle</span>, <span style='font-weight:600;'>Kickass</span>, <span style='font-weight:600;'>Bitsearch</span>, <span style='font-weight:600;'>MagnetDL, </span>Libgen, YTS, Limetorrent, TorrentFunk, Glodls, TorrentProject and YourBittorrent
 </span>
 </p>
 
@@ -30,15 +30,8 @@ $ git clone https://github.com/Ryuk-me/Torrent-Api-py
 # Install Depedencies
 $ pip install -r requirements.txt
 
-# Install Redis
-> Windows user (use ubuntu terminal)
-$ sudo apt-get install redis
-
-# Start redis server
-$ redis-server
-
 # Start
-$ uvicorn main:app
+$ python main.py
 
 ```
 
@@ -47,11 +40,8 @@ $ uvicorn main:app
 ```sh
 # Change Environment variables
 
-Go to .env file and add the following
+Go to .env file / okteto-stack.yaml and add the following
 
-# Get it from https://redistogo.com/
-REDIS_URI=redis://redistogo:f99edf3de0cyryty324fe462@sole.redistogo.com:10393/
-CACHE_EXPIRATION=180 # set cache expire time in seconds default is 180
 PYTHON_ENV=prod (if you are hosting)
 PYTHON_ENV=dev (if running local)
 ```
@@ -77,11 +67,15 @@ PYTHON_ENV=dev (if running local)
 |  TorrentFunk   |  `torrentfunk`   | https://www.torrentfunk.com  |    ❌     |
 |     Glodls     |     `glodls`     |      https://glodls.to       |    ❌     |
 | TorrentProject | `torrentproject` | https://torrentproject2.com  |    ❌     |
+| YourBittorrent |      `ybt`       |  https://yourbittorrent.com  |    ❌     |
 
 ---
 
 <details open>
 <summary style='font-size: 20px'><span style='font-size: 25px;font-weight:bold;'>Supported Methods and categories</span></summary>
+
+> If you want to change the default limit site wise [Visit Here](https://github.com/Ryuk-me/Torrent-Api-py/blob/main/helper/is_site_available.py#L30)
+
 <p>
 
 ```json
@@ -225,6 +219,16 @@ PYTHON_ENV=dev (if running local)
             "recent_category_available": False,
             "categories": [],
             "limit": 20
+        },
+        "ybt": {
+            "trending_available": True,
+            "trending_category": True,
+            "search_by_category": False,
+            "recent_available": True,
+            "recent_category_available": True,
+            "categories": ["anime", "music", "games", "tv",
+                           "apps", "xxx", "movies", "books", "pictures", "other"],  # book -> ebooks
+            "limit": 20
         }
 
     }
@@ -236,6 +240,16 @@ PYTHON_ENV=dev (if running local)
 ---
 
 ## API Endpoints
+
+<details open>
+<summary style='font-size: 15px'><span style='font-size: 20px;font-weight:bold;'>Supported sites list</span></summary>
+<p>
+
+> `api/v1/sites`
+
+</p>
+</details>
+<br>
 
 <details open>
 <summary style='font-size: 15px'><span style='font-size: 20px;font-weight:bold;'>Search</span></summary>
@@ -425,6 +439,17 @@ Test Here : https://Torrent-Api-py.ryukme.repl.co/api/v1/search?site=tgx&query=a
 ```
 
 ---
+
+# How to Host On Okteto
+
+```sh
+> Fork this repo
+> Go to  okteto-stack.yaml file and add REDIS_URI in environment
+> Now visit https://www.okteto.com/ and login via Github
+> Now select the repository u want to deploy and and just click on deploy don't add any environment variable there
+> Now wait for some time and your api will be live
+
+```
 
 ## Donations
 
